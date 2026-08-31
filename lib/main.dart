@@ -3,17 +3,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 
 // ==========================================
-// نظام الألوان
+// نظام الألوان - أخضر / ذهبي (Yalla Style)
 // ==========================================
 class AppColors {
-  static const primary = Color(0xFF6C4FD6);
-  static const primaryDark = Color(0xFF4A2FB8);
+  static const primary = Color(0xFF1B7A4D);
+  static const primaryDark = Color(0xFF0E4A2F);
+  static const primaryLight = Color(0xFF2E9E68);
   static const gold = Color(0xFFFFC94A);
-  static const background = Color(0xFF1A1330);
-  static const card = Color(0xFF2A1F4D);
-  static const cardLight = Color(0xFF352A5E);
+  static const goldDark = Color(0xFFE8A317);
+  static const background = Color(0xFF0A2E1E);
+  static const card = Color(0xFF123D28);
+  static const cardLight = Color(0xFF1E5238);
   static const textPrimary = Color(0xFFFFFFFF);
-  static const textSecondary = Color(0xFFB6ACD9);
+  static const textSecondary = Color(0xFFB6D9C7);
 }
 
 void main() {
@@ -35,11 +37,6 @@ class ChatApp extends StatelessWidget {
           primary: AppColors.primary,
           secondary: AppColors.gold,
           surface: AppColors.card,
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.primaryDark,
-          foregroundColor: Colors.white,
-          elevation: 0,
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
@@ -134,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [AppColors.primaryDark, AppColors.background],
+            colors: [AppColors.primary, AppColors.background],
           ),
         ),
         child: SafeArea(
@@ -214,6 +211,72 @@ class _LoginScreenState extends State<LoginScreen> {
 }
 
 // ==========================================
+// شريط علوي مشترك (عملات + صورة + مستوى)
+// ==========================================
+class TopBar extends StatelessWidget implements PreferredSizeWidget {
+  final String username;
+  const TopBar({super.key, required this.username});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      color: AppColors.primaryDark,
+      child: Row(
+        children: [
+          _pill(Icons.settings, null),
+          const SizedBox(width: 8),
+          _pill(Icons.diamond, '0'),
+          const SizedBox(width: 8),
+          _pill(Icons.monetization_on, '2000'),
+          const Spacer(),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: AppColors.gold,
+                child: Text(
+                  username.isNotEmpty ? username[0].toUpperCase() : '?',
+                  style: const TextStyle(color: AppColors.primaryDark, fontWeight: FontWeight.bold),
+                ),
+              ),
+              Positioned(
+                bottom: -4, left: -4,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(color: AppColors.gold, borderRadius: BorderRadius.circular(6)),
+                  child: const Text('1', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primaryDark)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _pill(IconData icon, String? value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(color: AppColors.cardLight, borderRadius: BorderRadius.circular(20)),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: AppColors.gold),
+          if (value != null) ...[
+            const SizedBox(width: 4),
+            Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(56);
+}
+
+// ==========================================
 // الشاشة الرئيسية - Bottom Navigation
 // ==========================================
 class MainScreen extends StatefulWidget {
@@ -252,11 +315,12 @@ class _MainScreenState extends State<MainScreen> {
     ];
 
     return Scaffold(
-      body: SafeArea(child: tabs[_index]),
+      appBar: TopBar(username: _username),
+      body: tabs[_index],
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          color: AppColors.card,
-          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)],
+          color: AppColors.primaryDark,
+          boxShadow: [BoxShadow(color: Colors.black38, blurRadius: 10)],
         ),
         child: SafeArea(
           child: Row(
@@ -298,7 +362,7 @@ class _MainScreenState extends State<MainScreen> {
 }
 
 // ==========================================
-// تبويب الغرف
+// تبويب الغرف - عرض شبكي (Grid) بستايل الكروت
 // ==========================================
 class RoomsTab extends StatefulWidget {
   final String token;
@@ -380,11 +444,13 @@ class _RoomsTabState extends State<RoomsTab> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
           child: Row(
             children: [
+              const Icon(Icons.explore_rounded, color: AppColors.gold),
+              const SizedBox(width: 8),
               const Expanded(
-                child: Text('الغرف', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                child: Text('اكتشاف الغرف', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
               ),
               IconButton(icon: const Icon(Icons.refresh, color: AppColors.gold), onPressed: _loadRooms),
               IconButton(icon: const Icon(Icons.add_circle, color: AppColors.gold), onPressed: _showCreateRoomDialog),
@@ -396,27 +462,73 @@ class _RoomsTabState extends State<RoomsTab> {
               ? const Center(child: CircularProgressIndicator(color: AppColors.gold))
               : _rooms.isEmpty
                   ? const Center(child: Text('لا توجد غرف حالياً، أنشئ واحدة!', style: TextStyle(color: AppColors.textSecondary)))
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                  : GridView.builder(
+                      padding: const EdgeInsets.all(12),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: 0.85,
+                      ),
                       itemCount: _rooms.length,
                       itemBuilder: (context, index) {
                         final room = _rooms[index];
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          decoration: BoxDecoration(
-                            color: AppColors.card,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                            leading: const CircleAvatar(
-                              backgroundColor: AppColors.primary,
-                              child: Icon(Icons.groups, color: Colors.white),
+                        return InkWell(
+                          onTap: () => _joinAndOpenRoom(room['id'], room['name']),
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.card,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppColors.primaryLight.withOpacity(0.4)),
                             ),
-                            title: Text(room['name'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                            subtitle: Text('${room['description'] ?? ''} • أعضاء: ${room['members_count']}', style: const TextStyle(color: AppColors.textSecondary)),
-                            trailing: const Icon(Icons.chevron_left, color: AppColors.textSecondary),
-                            onTap: () => _joinAndOpenRoom(room['id'], room['name']),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    margin: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Stack(
+                                      children: [
+                                        const Center(child: Icon(Icons.groups, color: Colors.white, size: 40)),
+                                        Positioned(
+                                          top: 6, right: 6,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(10)),
+                                            child: Row(
+                                              children: [
+                                                const Icon(Icons.person, size: 11, color: Colors.white),
+                                                const SizedBox(width: 2),
+                                                Text('${room['members_count']}', style: const TextStyle(fontSize: 10, color: Colors.white)),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(room['name'] ?? '',
+                                          maxLines: 1, overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                                      Text(room['description'] ?? '',
+                                          maxLines: 1, overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },
@@ -435,7 +547,7 @@ class GroupsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _ComingSoonTab(icon: Icons.diversity_3_rounded, title: 'المجموعات', subtitle: 'قريباً راح تقدر تنشئ مجموعات وتضيف أصدقاءك فيها');
+    return const _ComingSoonTab(icon: Icons.diversity_3_rounded, title: 'المجموعات', subtitle: 'قريباً راح تقدر تنشئ مجموعات وتضيف أصدقاءك فيها');
   }
 }
 
@@ -447,7 +559,7 @@ class FriendsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _ComingSoonTab(icon: Icons.people_alt_rounded, title: 'الأصدقاء', subtitle: 'قريباً راح تقدر تضيف أصدقاء وتتابع نشاطهم');
+    return const _ComingSoonTab(icon: Icons.people_alt_rounded, title: 'الأصدقاء', subtitle: 'قريباً راح تقدر تضيف أصدقاء وتتابع نشاطهم');
   }
 }
 
@@ -482,7 +594,7 @@ class _ComingSoonTab extends StatelessWidget {
 }
 
 // ==========================================
-// تبويب البروفايل
+// تبويب البروفايل - بستايل Yalla الأخضر
 // ==========================================
 class ProfileTab extends StatelessWidget {
   final String username;
@@ -502,51 +614,151 @@ class ProfileTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
+    return SingleChildScrollView(
       child: Column(
         children: [
-          const SizedBox(height: 20),
           Container(
-            width: 90, height: 90,
-            decoration: const BoxDecoration(color: AppColors.gold, shape: BoxShape.circle),
-            child: Center(
-              child: Text(
-                username.isNotEmpty ? username[0].toUpperCase() : '?',
-                style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: AppColors.primaryDark),
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [AppColors.primaryLight, AppColors.primary],
               ),
             ),
-          ),
-          const SizedBox(height: 14),
-          Text(username, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16)),
-            child: Row(
+            child: Column(
               children: [
-                const Icon(Icons.monetization_on, color: AppColors.gold),
-                const SizedBox(width: 10),
-                const Text('الرصيد', style: TextStyle(color: Colors.white, fontSize: 16)),
-                const Spacer(),
-                const Text('0', style: TextStyle(color: AppColors.gold, fontSize: 18, fontWeight: FontWeight.bold)),
+                Container(
+                  width: 90, height: 90,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.gold,
+                    border: Border.all(color: Colors.white, width: 3),
+                  ),
+                  child: Center(
+                    child: Text(
+                      username.isNotEmpty ? username[0].toUpperCase() : '?',
+                      style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: AppColors.primaryDark),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(username, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                const SizedBox(height: 4),
+                const Text('ID: ------', style: TextStyle(color: Colors.white70, fontSize: 12)),
               ],
             ),
           ),
-          const Spacer(),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () => _logout(context),
-              icon: const Icon(Icons.logout, color: Colors.redAccent),
-              label: const Text('تسجيل الخروج', style: TextStyle(color: Colors.redAccent)),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                side: const BorderSide(color: Colors.redAccent),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(14)),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(color: AppColors.gold, borderRadius: BorderRadius.circular(8)),
+                        child: const Text('1', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryDark)),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: LinearProgressIndicator(
+                            value: 0,
+                            minHeight: 8,
+                            backgroundColor: AppColors.cardLight,
+                            valueColor: const AlwaysStoppedAnimation(AppColors.gold),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text('المستوى', style: TextStyle(color: Colors.white)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _sectionCard('اللعبة', [
+                  _statRow('المجموع', '0'),
+                  _statRow('احتمال الفوز', '0.0%'),
+                ]),
+                const SizedBox(height: 14),
+                _sectionCard('الإنجازات', [
+                  _statRow('مستوى رويال', '0'),
+                  _statRow('الشارات', '0'),
+                ]),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  width: double.infinity,
+                  decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(14)),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.monetization_on, color: AppColors.gold),
+                      const SizedBox(width: 10),
+                      const Text('الرصيد', style: TextStyle(color: Colors.white, fontSize: 16)),
+                      const Spacer(),
+                      const Text('0', style: TextStyle(color: AppColors.gold, fontSize: 18, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _logout(context),
+                    icon: const Icon(Icons.logout, color: Colors.redAccent),
+                    label: const Text('تسجيل الخروج', style: TextStyle(color: Colors.redAccent)),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: const BorderSide(color: Colors.redAccent),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionCard(String title, List<Widget> rows) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(14)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(width: 4, height: 18, color: AppColors.gold),
+              const SizedBox(width: 8),
+              Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ...rows,
+        ],
+      ),
+    );
+  }
+
+  Widget _statRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Text(label, style: const TextStyle(color: AppColors.textSecondary)),
+          const Spacer(),
+          Text(value, style: const TextStyle(color: AppColors.gold, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -600,7 +812,12 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.roomName)),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.primaryDark,
+        foregroundColor: Colors.white,
+        title: Text(widget.roomName),
+      ),
       body: Column(
         children: [
           Expanded(
