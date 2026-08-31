@@ -315,4 +315,67 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     setState(() => _messages = result['messages'] ?? []);
   }
 
-  Future<void>
+  Future<void> _send() async {
+    if (_msgCtrl.text.trim().isEmpty) return;
+    final text = _msgCtrl.text.trim();
+    _msgCtrl.clear();
+    await ApiService.sendMessage(widget.token, widget.roomId, text);
+    _loadMessages();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(widget.roomName)),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(8),
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final msg = _messages[index];
+                final isMe = msg['sender_username'] == widget.username;
+                return Align(
+                  alignment: isMe ? Alignment.centerLeft : Alignment.centerRight,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isMe ? Colors.blue[100] : Colors.grey[200],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(msg['sender_username'] ?? '', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                        Text(msg['message'] ?? ''),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _msgCtrl,
+                    decoration: const InputDecoration(
+                      hintText: 'اكتب رسالة...',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                IconButton(icon: const Icon(Icons.send), onPressed: _send),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
